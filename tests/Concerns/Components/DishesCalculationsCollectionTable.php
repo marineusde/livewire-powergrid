@@ -5,31 +5,32 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\{Carbon, Collection, Number};
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    Footer,
-    Header,
-    PowerGrid,
-    PowerGridComponent,
-    PowerGridFields
-};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class DishesCalculationsCollectionTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-calculation-collection-table';
+
     public array $eventId = [];
 
     public bool $join = false;
+
+    public function start(): void
+    {
+        PowerGrid::start()
+            ->summarize();
+    }
 
     public function setUp(): array
     {
         $this->showCheckBox();
 
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -142,13 +143,8 @@ class DishesCalculationsCollectionTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap(): void
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind(): void
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

@@ -2,9 +2,11 @@
 
 use PowerComponents\LivewirePowerGrid\Facades\Rule;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Components\DishesTable;
-use PowerComponents\LivewirePowerGrid\{Button, Column, Detail};
+use PowerComponents\LivewirePowerGrid\{Button, Column, Facades\PowerGrid};
 
 $baseRuleComponent = new class () extends DishesTable {
+    public string $tableName = 'testing-components-for-test-rule-table';
+
     public function setUp(): array
     {
         $this->showCheckBox();
@@ -12,7 +14,7 @@ $baseRuleComponent = new class () extends DishesTable {
         return [
             ...parent::setUp(),
 
-            Detail::make()
+            PowerGrid::detail()
                 ->view('components.detail')
                 ->showCollapseIcon()
                 ->params(['name' => 'Luan']),

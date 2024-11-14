@@ -1,9 +1,9 @@
 @props([
-    'theme' => '',
     'class' => '',
     'column' => null,
     'inline' => null,
     'filter' => null,
+    'options' => [],
 ])
 @php
     $field = data_get($filter, 'field');
@@ -15,9 +15,8 @@
     );
 
     $filterClasses = \Illuminate\Support\Arr::toCssClasses([
-        data_get($theme, 'selectClass'),
+       theme_style($theme, 'filterSelect.select'),
         $class,
-        'power_grid',
     ]);
 
     $params = array_merge([...data_get($filter, 'attributes'), ...$defaultAttributes], $filter);
@@ -32,8 +31,7 @@
     />
 @else
     <div
-        @class([data_get($theme, 'baseClass'), 'space-y-1' => !$inline])
-        style="{{ data_get($theme, 'baseStyle') }}"
+        @class([theme_style($theme, 'filterSelect.base'), 'space-y-1' => !$inline])
     >
         @if (!$inline)
             <label class="block text-sm font-semibold text-pg-primary-700 dark:text-pg-primary-300">
@@ -46,7 +44,9 @@
                 style="{{ data_get($column, 'headerStyle') }}"
                 {{ $defaultAttributes['selectAttributes'] }}
             >
-                <option value="">{{ trans('livewire-powergrid::datatable.select.all') }}</option>
+                @if(!data_get($params, 'params.disableOptionAll', false))
+                    <option value="">{{ trans('livewire-powergrid::datatable.select.all') }}</option>
+                @endif
 
                 @php
                     $computedDatasource = data_get($filter, 'computedDatasource');

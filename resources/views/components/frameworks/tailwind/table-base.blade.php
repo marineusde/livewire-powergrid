@@ -1,26 +1,29 @@
+@php
+    $columns = collect($columns)->map(function ($column) {
+        return data_forget($column, 'rawQueries');
+    });
+@endphp
+
 <div
     class="flex flex-col"
     @if ($deferLoading) wire:init="fetchDatasource" @endif
 >
     <div
         id="power-grid-table-container"
-        class="{{ data_get($theme, 'table.containerClass', '-my-2 overflow-x-auto sm:-mx-3 lg:-mx-8') }}"
-        style="{{ data_get($theme, 'table.containerStyle') }}"
+        class="{{ theme_style($theme, 'table.layout.container') }}"
     >
         <div
             id="power-grid-table-base"
-            class="{{ data_get($theme, 'table.baseClass', 'p-3 align-middle inline-block min-w-full w-full sm:px-6 lg:px-8') }}"
-            style="{{ data_get($theme, 'table.baseStyle') }}"
+            class="{{ theme_style($theme, 'table.layout.base') }}"
         >
-
-            @include(data_get($theme, 'layout.header'), [
+            @include(theme_style($theme, 'layout.header'), [
                 'enabledFilters' => $enabledFilters,
             ])
 
             @if (config('livewire-powergrid.filter') === 'outside')
                 @php
-                    $filtersFromColumns = collect($columns)
-                        ->filter(fn($column) => filled($column->filters));
+                    $filtersFromColumns = $columns
+                        ->filter(fn($column) => filled(data_get($column, 'filters')));
                 @endphp
 
                 @if ($filtersFromColumns->count() > 0)
@@ -38,14 +41,13 @@
                 @class([
                     'overflow-auto' => $readyToLoad,
                     'overflow-hidden' => !$readyToLoad,
-                    data_get($theme, 'table.divClass'),
+                    theme_style($theme, 'table.layout.div'),
                 ])
-                style="{{ data_get($theme, 'table.divStyle') }}"
             >
                 @include($table)
             </div>
 
-            @include(data_get($theme, 'footer.view'))
+            @include(theme_style($theme, 'footer.view'))
         </div>
     </div>
 </div>

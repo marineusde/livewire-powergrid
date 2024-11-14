@@ -4,40 +4,41 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+use PowerComponents\LivewirePowerGrid\{Column,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
     PowerGridFields,
-    Traits\WithExport
-};
+    Traits\WithExport};
 
 class ExportTable extends PowerGridComponent
 {
     use WithExport;
 
+    public string $tableName = 'testing-export-table';
+
     public string $separator = ',';
 
     public string $delimiter = '"';
+
+    public bool $testStripHtml = false;
 
     public function setUp(): array
     {
         $this->showCheckBox();
 
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->csvSeparator($this->separator)
                 ->csvDelimiter($this->delimiter)
+                ->stripTags($this->testStripHtml)
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -73,13 +74,8 @@ class ExportTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

@@ -1,13 +1,13 @@
 @props([
     'loading' => false,
 ])
-<tr class="{{ data_get($theme, 'table.trClass') }}"
-    style="{{ data_get($theme, 'table.trStyle') }}"
+<tr
+    class="{{ theme_style($theme, 'table.header.tr') }}"
 >
     @if ($loading)
         <td
-            class="{{ data_get($theme, 'table.tdBodyEmptyClass') }}"
-            colspan="{{ ($checkbox ? 1 : 0) + count($columns) }}"
+            class="{{ theme_style($theme, 'table.body.tbodyEmpty') }}"
+            colspan="999"
         >
             @if ($loadingComponent)
                 @include($loadingComponent)
@@ -19,8 +19,7 @@
         @if (data_get($setUp, 'detail.showCollapseIcon'))
             <th
                 scope="col"
-                class="{{ data_get($theme, 'table.thClass') }}"
-                style="{{ data_get($theme, 'table.trStyle') }}"
+                class="{{ theme_style($theme, 'table.header.th') }}"
                 wire:key="show-collapse-{{ $tableName }}"
             >
             </th>
@@ -30,49 +29,48 @@
             <th
                 fixed
                 x-show="hasHiddenElements"
-                class="{{ data_get($theme, 'table.thClass') }}"
-                style="{{ data_get($theme, 'table.thStyle') }}"
+                class="{{ theme_style($theme, 'table.header.th') }}"
             >
             </th>
         @endisset
 
         @if ($radio)
             <th
-                class="{{ data_get($theme, 'table.thClass') }}"
-                style="{{ data_get($theme, 'table.thStyle') }}"
+                class="{{ theme_style($theme, 'table.header.th') }}"
             >
             </th>
         @endif
 
         @if ($checkbox)
-            <x-livewire-powergrid::checkbox-all
-                :checkbox="$checkbox"
-                :theme="data_get($theme, 'checkbox')"
-            />
+            @include('livewire-powergrid::components.checkbox-all')
         @endif
 
         @foreach ($columns as $column)
             <x-livewire-powergrid::cols
-                wire:key="cols-{{ $column->field }} }}"
-                :column="$column"
-                :theme="$theme"
-                :enabledFilters="$enabledFilters"
+                wire:key="cols-{{ data_get($column, 'field') }} }}"
+                :$column
+                :$theme
+                :$enabledFilters
             />
         @endforeach
 
         @if (isset($actions) && count($actions))
             @php
-                $responsiveActionsColumnName = PowerComponents\LivewirePowerGrid\Responsive::ACTIONS_COLUMN_NAME;
+                $responsiveActionsColumnName =
+                    \PowerComponents\LivewirePowerGrid\Components\SetUp\Responsive::ACTIONS_COLUMN_NAME;
 
-                $isActionFixedOnResponsive = isset($this->setUp['responsive']) && in_array($responsiveActionsColumnName, data_get($this->setUp, 'responsive.fixedColumns')) ? true : false;
+                $isActionFixedOnResponsive =
+                    isset($this->setUp['responsive']) &&
+                    in_array($responsiveActionsColumnName, data_get($this->setUp, 'responsive.fixedColumns'))
+                        ? true
+                        : false;
             @endphp
 
             <th
                 @if ($isActionFixedOnResponsive) fixed @endif
-                class="{{ data_get($theme, 'table.thClass') . ' ' . data_get($theme, 'table.thActionClass') }}"
+                class="{{ theme_style($theme, 'table.header.th') . ' ' . theme_style($theme, 'table.header.thAction') }}"
                 scope="col"
-                style="{{ data_get($theme, 'table.thStyle') . ' ' . data_get($theme, 'table.thActionStyle') }}"
-                colspan="{{ count($actions) }}"
+                colspan="999"
                 wire:key="{{ md5('actions') }}"
             >
                 {{ trans('livewire-powergrid::datatable.labels.action') }}

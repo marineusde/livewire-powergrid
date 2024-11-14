@@ -26,15 +26,15 @@ $component = new class () extends DishTableBase {
 };
 
 $params = [
-    'tailwind -> id'  => [$component::class, 'tailwind', 'name'],
-    'bootstrap -> id' => [$component::class, 'bootstrap', 'name'],
+    'tailwind -> id'  => [$component::class, \PowerComponents\LivewirePowerGrid\Themes\Tailwind::class, 'name'],
+    'bootstrap -> id' => [$component::class, \PowerComponents\LivewirePowerGrid\Themes\Bootstrap5::class, 'name'],
 ];
 
 it('should be able to set persist_driver for session', function (string $componentString, string $theme, string $field) {
     config()->set('livewire-powergrid.persist_driver', 'session');
 
     $component = livewire($componentString)
-        ->call($theme);
+        ->call('setTestThemeClass', $theme);
 
     /** @var PowerGridComponent $component */
     expect($component->filters)
@@ -43,7 +43,7 @@ it('should be able to set persist_driver for session', function (string $compone
     /** @var Testable $component */
     $component->call('filterInputText', $field, 'ba', 'test');
 
-    expect(session('pg:default'))->toBe('{"filters":[],"enabledFilters":[{"field":"' . $field . '","label":"test"}]}');
+    expect(session('pg:testing-dish-table'))->toBe('{"filters":[],"enabledFilters":[{"field":"' . $field . '","label":"test"}]}');
 })->group('filters')
     ->with($params);
 
@@ -51,7 +51,7 @@ it('should be able to set persist_driver for cookies', function (string $compone
     config()->set('livewire-powergrid.persist_driver', 'cookies');
 
     $component = livewire($componentString)
-        ->call($theme);
+        ->call('setTestThemeClass', $theme);
 
     /** @var PowerGridComponent $component */
     expect($component->filters)
@@ -60,7 +60,7 @@ it('should be able to set persist_driver for cookies', function (string $compone
     /** @var Testable $component */
     $component->call('filterInputText', $field, 'ba', 'test');
 
-    expect(Cookie::queued('pg:default')->getValue())->toBe('{"filters":[],"enabledFilters":[{"field":"' . $field . '","label":"test"}]}');
+    expect(Cookie::queued('pg:testing-dish-table')->getValue())->toBe('{"filters":[],"enabledFilters":[{"field":"' . $field . '","label":"test"}]}');
 })
     ->with($params);
 
@@ -70,7 +70,7 @@ it('should not be able to set invalid persist driver', function (string $compone
 
     expect(static function () use ($componentString, $theme) {
         livewire($componentString)
-            ->call($theme);
+            ->call('setTestThemeClass', $theme);
     })->toThrow(Exception::class);
 })
     ->with($params);

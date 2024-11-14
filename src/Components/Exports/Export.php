@@ -4,8 +4,8 @@ namespace PowerComponents\LivewirePowerGrid\Components\Exports;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use PowerComponents\LivewirePowerGrid\Column;
-use PowerComponents\LivewirePowerGrid\Components\Rules\{RuleManager, RulesController};
+use PowerComponents\LivewirePowerGrid\{Column};
+use stdClass;
 
 class Export
 {
@@ -27,11 +27,6 @@ class Export
         return $this;
     }
 
-    /**
-     * @param array<Column> $columns
-     * @param Collection $data
-     * @return Export
-     */
     public function setData(array $columns, Collection $data): Export
     {
         $this->columns = $columns;
@@ -40,30 +35,36 @@ class Export
         return $this;
     }
 
-    /**
-     * @param Collection $data
-     * @param array<Column> $columns
-     * @return array{headers: array, rows: array}.
-     */
-    public function prepare(Collection $data, array $columns): array
+    public function prepare(Collection $data, array $columns, bool $stripTags): array
     {
         $header = collect([]);
 
-        $actionRulesClass = resolve(RulesController::class);
-
-        $data = $data->transform(function ($row) use ($columns, $header, $actionRulesClass) {
+        $data = $data->transform(function ($row) use ($columns, $header, $stripTags) {
             $item = collect([]);
 
-            collect($columns)->each(function ($column) use ($row, $header, $item, $actionRulesClass) {
-                /** @var Model|\stdClass $row */
+            collect($columns)->each(function ($column) use ($row, $header, $item, $stripTags) {
+                /** @var Model|stdClass $row */
                 if (method_exists($row, 'withoutRelations')) {
                     $row = $row->withoutRelations()->toArray();
                 }
 
-                $rules        = $actionRulesClass->recoverFromAction($row, RuleManager::TYPE_ROWS);
                 $isExportable = false;
 
-                if (filled($rules['hide']) || filled($rules['disable'])) {
+                $hide = (bool) data_get(
+                    collect((array) data_get($row, '__powergrid_rules'))
+                        ->where('apply', true)
+                        ->last(),
+                    'disable',
+                );
+
+                $disable = (bool) data_get(
+                    collect((array) data_get($row, '__powergrid_rules'))
+                        ->where('apply', true)
+                        ->last(),
+                    'disable',
+                );
+
+                if ($hide || $disable) {
                     $isExportable = true;
                 }
 
@@ -72,6 +73,9 @@ class Export
                     /** @var array $row */
                     foreach ($row as $key => $value) {
                         if ($key === $column->field) {
+                            if (true === $stripTags) {
+                                $value = strip_tags($value);
+                            }
                             $item->put($column->title, html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                         }
                     }

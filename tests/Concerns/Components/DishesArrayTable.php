@@ -3,19 +3,17 @@
 namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Support\{Carbon};
-use PowerComponents\LivewirePowerGrid\{
-    Button,
+use PowerComponents\LivewirePowerGrid\{Button,
     Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
-    PowerGridFields
-};
+    PowerGridFields};
 
 class DishesArrayTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-array-table';
+
     public array $eventId = [];
 
     public array $testFilters = [];
@@ -86,15 +84,15 @@ class DishesArrayTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -155,7 +153,7 @@ class DishesArrayTable extends PowerGridComponent
         ];
     }
 
-    public function actions(): array
+    public function actions($row): array
     {
         return [
             Button::add('edit-stock')
@@ -170,13 +168,8 @@ class DishesArrayTable extends PowerGridComponent
         return $this->testFilters;
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

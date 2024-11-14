@@ -4,20 +4,18 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+use PowerComponents\LivewirePowerGrid\{Column,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
     PowerGridFields,
-    Traits\WithExport
-};
+    Traits\WithExport};
 
 class BatchExportTable extends PowerGridComponent
 {
     use WithExport;
+
+    public string $tableName = 'testing-batch-export-table';
 
     public int $filterDataSourceId;
 
@@ -26,15 +24,15 @@ class BatchExportTable extends PowerGridComponent
     public function setUp(): array
     {
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV)
                 ->queues(6),
 
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -69,13 +67,8 @@ class BatchExportTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

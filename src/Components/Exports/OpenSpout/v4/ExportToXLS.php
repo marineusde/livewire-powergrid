@@ -9,7 +9,7 @@ use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use OpenSpout\Writer\XLSX\{Options, Writer};
 use PowerComponents\LivewirePowerGrid\Components\Exports\Contracts\ExportInterface;
 use PowerComponents\LivewirePowerGrid\Components\Exports\{Export};
-use PowerComponents\LivewirePowerGrid\Exportable;
+use PowerComponents\LivewirePowerGrid\{Components\SetUp\Exportable};
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /** @codeCoverageIgnore */
@@ -39,7 +39,8 @@ class ExportToXLS extends Export implements ExportInterface
      */
     public function build(Exportable|array $exportOptions): void
     {
-        $data = $this->prepare($this->data, $this->columns);
+        $stripTags = boolval(data_get($exportOptions, 'stripTags', false));
+        $data      = $this->prepare($this->data, $this->columns, $stripTags);
 
         $options = new Options();
         $writer  = new Writer($options);

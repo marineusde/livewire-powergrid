@@ -2,23 +2,20 @@
 
 namespace PowerComponents\LivewirePowerGrid\Providers;
 
-use Illuminate\Container\Container;
 use Illuminate\Database\Events\MigrationsEnded;
-use Illuminate\Pagination\{LengthAwarePaginator, Paginator};
 use Illuminate\Support\Facades\{Blade, Event};
-use Illuminate\Support\ServiceProvider;
-use Laravel\Scout\Builder;
-use Laravel\Scout\Contracts\PaginatesEloquentModels;
+use Illuminate\Support\{ServiceProvider};
 use Livewire\Features\SupportLegacyModels\{EloquentCollectionSynth, EloquentModelSynth};
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
-use PowerComponents\LivewirePowerGrid\Commands\CheckDependenciesCommand;
 use PowerComponents\LivewirePowerGrid\Commands\{CreateCommand, PublishCommand, UpdateCommand};
-use PowerComponents\LivewirePowerGrid\Components\Actions\Macros;
 use PowerComponents\LivewirePowerGrid\Components\Filters\FilterManager;
 use PowerComponents\LivewirePowerGrid\Components\Rules\RuleManager;
 use PowerComponents\LivewirePowerGrid\Support\PowerGridTableCache;
-use PowerComponents\LivewirePowerGrid\Themes\ThemeManager;
-use PowerComponents\LivewirePowerGrid\{Livewire\LazyChild, Livewire\PerformanceCard, PowerGridManager};
+use PowerComponents\LivewirePowerGrid\{Livewire\LazyChild,
+    Livewire\PerformanceCard,
+    PowerGridManager,
+    Testing\TestActions};
 
 /** @codeCoverageIgnore */
 class PowerGridServiceProvider extends ServiceProvider
@@ -30,7 +27,6 @@ class PowerGridServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([UpdateCommand::class]);
             $this->commands([PublishCommand::class]);
-            $this->commands([CheckDependenciesCommand::class]);
             $this->commands([CreateCommand::class]);
         }
 
@@ -40,6 +36,8 @@ class PowerGridServiceProvider extends ServiceProvider
 
         Livewire::propertySynthesizer(EloquentModelSynth::class);
         Livewire::propertySynthesizer(EloquentCollectionSynth::class);
+
+        Testable::mixin(new TestActions());
     }
 
     public function register(): void
@@ -56,7 +54,6 @@ class PowerGridServiceProvider extends ServiceProvider
         }
 
         $this->app->alias(PowerGridManager::class, 'powergrid');
-        $this->app->alias(ThemeManager::class, 'theme');
         $this->app->alias(RuleManager::class, 'rule');
         $this->app->alias(FilterManager::class, 'filter');
 
@@ -68,7 +65,9 @@ class PowerGridServiceProvider extends ServiceProvider
             Livewire::component('powergrid-performance-card', PerformanceCard::class);
         }
 
-        $this->macros();
+        Macros::columns();
+        Macros::actions();
+        Macros::builder();
     }
 
     private function publishViews(): void
@@ -92,43 +91,5 @@ class PowerGridServiceProvider extends ServiceProvider
         ], 'livewire-powergrid-config');
 
         $this->publishes([__DIR__ . '/../../resources/lang' => lang_path('vendor/' . $this->packageName)], $this->packageName . '-lang');
-    }
-
-    private function macros(): void
-    {
-        Macros::boot();
-
-        if (class_exists(\Laravel\Scout\Builder::class)) {
-            Builder::macro('paginateSafe', function ($perPage = null, $pageName = 'page', $page = null) {
-                $engine = $this->engine(); // @phpstan-ignore-line
-
-                if ($engine instanceof PaginatesEloquentModels) {
-                    return $engine->paginate($this, $perPage, $page)->appends('query', $this->query);
-                }
-
-                $page = $page ?: Paginator::resolveCurrentPage($pageName);
-
-                $perPage = $perPage ?: $this->model->getPerPage();
-
-                $results = $this->model->newCollection(
-                    $engine->map(
-                        $this,
-                        $rawResults = $engine->paginate($this, $perPage, $page),
-                        $this->model
-                    )->all()
-                );
-
-                return Container::getInstance()->makeWith(LengthAwarePaginator::class, [
-                    'items'       => $results,
-                    'total'       => $engine->getTotalCount($rawResults),
-                    'perPage'     => $perPage,
-                    'currentPage' => $page,
-                    'options'     => [
-                        'path'     => Paginator::resolveCurrentPath(),
-                        'pageName' => $pageName,
-                    ],
-                ])->appends('query', $this->query);
-            });
-        }
     }
 }

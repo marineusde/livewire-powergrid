@@ -3,19 +3,17 @@
 namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Support\{Carbon, Collection};
-use PowerComponents\LivewirePowerGrid\{
-    Button,
+use PowerComponents\LivewirePowerGrid\{Button,
     Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
-    PowerGridFields
-};
+    PowerGridFields};
 
 class DishesCollectionTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-collection-table';
+
     public array $testFilters = [];
 
     public function datasource(): Collection
@@ -69,15 +67,15 @@ class DishesCollectionTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -144,18 +142,17 @@ class DishesCollectionTable extends PowerGridComponent
             Button::add('edit-stock')
                 ->slot('<div id="edit">Edit</div>')
                 ->class('text-center')
-                ->openModal('edit-stock', ['dishId' => $row['id']]),
+                ->openModal('edit-stock', ['dishId' => $row->id]),
 
             Button::add('edit-stock-for-rules')
                 ->slot('<div id="edit">Edit for Rules</div>')
                 ->class('text-center')
-                ->openModal('edit-stock-for-rules', ['dishId' => $row['id']]),
+                ->openModal('edit-stock-for-rules', ['dishId' => $row->id]),
 
             Button::add('destroy')
                 ->slot(__('Delete'))
                 ->class('text-center')
-                ->dispatch('deletedEvent', ['dishId' => $row['id']])
-                ->method('delete'),
+                ->dispatch('deletedEvent', ['dishId' => $row->id]),
         ];
     }
 
@@ -164,13 +161,8 @@ class DishesCollectionTable extends PowerGridComponent
         return $this->testFilters;
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

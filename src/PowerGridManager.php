@@ -2,35 +2,56 @@
 
 namespace PowerComponents\LivewirePowerGrid;
 
-use PowerComponents\LivewirePowerGrid\Themes as Themes;
+use PowerComponents\LivewirePowerGrid\Components\SetUp\{Cache,
+    Detail,
+    Exportable,
+    Footer,
+    Header,
+    Lazy,
+    Responsive
+};
 
 class PowerGridManager
 {
-    /** @deprecated until 6.x */
-    public function columns(): PowerGridColumns
-    {
-        return new PowerGridColumns();
-    }
-
     public function fields(): PowerGridFields
     {
-        return new PowerGridFields();
+        return app(PowerGridFields::class);
     }
 
-    /**
-     * @param string $class
-     * @return object|Themes\ThemeBase
-     */
-    public static function theme(string $class)
+    public function header(): Header
     {
-        if ($class === 'tailwind') {
-            $class = Themes\Tailwind::class;
-        }
+        return app(Header::class);
+    }
 
-        if ($class === 'bootstrap') {
-            $class = Themes\Bootstrap5::class;
-        }
+    public function footer(): Footer
+    {
+        return app(Footer::class);
+    }
 
-        return new $class();
+    public function detail(): Detail
+    {
+        return app(Detail::class);
+    }
+
+    public function responsive(): Responsive
+    {
+        return app(Responsive::class);
+    }
+
+    public function lazy(): Lazy
+    {
+        return app(Lazy::class);
+    }
+
+    public function cache(): Cache
+    {
+        return app(Cache::class);
+    }
+
+    public function exportable(string $fileName = 'export'): Exportable
+    {
+        return app(Exportable::class, [
+            'fileName' => $fileName,
+        ]);
     }
 }

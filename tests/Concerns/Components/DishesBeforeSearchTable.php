@@ -5,17 +5,19 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Column, Footer, Header, PowerGrid, PowerGridComponent, PowerGridFields};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class DishesBeforeSearchTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-before-search-table';
+
     public function setUp(): array
     {
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -47,6 +49,7 @@ class DishesBeforeSearchTable extends PowerGridComponent
     {
         return PowerGrid::fields()
             ->add('id')
+            ->add('in_stock')
             ->add('name');
     }
 
@@ -57,24 +60,19 @@ class DishesBeforeSearchTable extends PowerGridComponent
                 ->searchable()
                 ->sortable(),
 
-            Column::make('Dish', 'name', 'dishes.name')
+            Column::make('Dish', 'name', 'name')
                 ->searchable()
                 ->sortable(),
 
-            Column::make('Stock', 'in_stock', 'dishes.in_stock')
+            Column::make('Stock', 'in_stock', 'in_stock')
                 ->searchable(),
 
             Column::action('Action'),
         ];
     }
 
-    public function bootstrap(): void
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind(): void
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

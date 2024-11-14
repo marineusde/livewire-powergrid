@@ -4,14 +4,18 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Column, Header, PowerGrid, PowerGridComponent, PowerGridFields};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class DishesTableWithJoinNames extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-with-join-names-table';
+
+    public ?string $primaryKeyAlias = 'id';
+
     public function setUp(): array
     {
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
         ];
     }
@@ -29,8 +33,8 @@ class DishesTableWithJoinNames extends PowerGridComponent
     {
         return PowerGrid::fields()
             ->add('id')
-            ->add('dish_name', fn (Dish $dish) => $dish->name)
-            ->add('category_name', fn (Dish $dish) => $dish->category->name);
+            ->add('dish_name', fn ($dish) => $dish->name)
+            ->add('category_name', fn ($dish) => $dish->category->name);
     }
 
     public function columns(): array
@@ -52,13 +56,8 @@ class DishesTableWithJoinNames extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

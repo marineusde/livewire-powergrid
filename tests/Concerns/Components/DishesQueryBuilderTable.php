@@ -6,19 +6,17 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use NumberFormatter;
-use PowerComponents\LivewirePowerGrid\{
-    Button,
+use PowerComponents\LivewirePowerGrid\{Button,
     Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
-    PowerGridFields
-};
+    PowerGridFields};
 
 class DishesQueryBuilderTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-query-builder-table';
+
     public string $primaryKey = 'dishes.id';
 
     public array $testFilters = [];
@@ -28,15 +26,15 @@ class DishesQueryBuilderTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -170,19 +168,18 @@ class DishesQueryBuilderTable extends PowerGridComponent
         ];
     }
 
-    public function actions(object $dish): array
+    public function actions($row): array
     {
         return [
             Button::add('edit-stock')
                 ->slot('<div id="edit">Edit</div>')
                 ->class('text-center')
-                ->openModal('edit-stock', ['dishId' => $dish->id]),
+                ->openModal('edit-stock', ['dishId' => $row->id]),
 
             Button::add('destroy')
                 ->slot(__('Delete'))
                 ->class('text-center')
-                ->dispatch('deletedEvent', ['dishId' => $dish->id])
-                ->method('delete'),
+                ->dispatch('deletedEvent', ['dishId' => $row->id]),
         ];
     }
 
@@ -191,13 +188,8 @@ class DishesQueryBuilderTable extends PowerGridComponent
         return $this->testFilters;
     }
 
-    public function bootstrap(): void
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind(): void
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

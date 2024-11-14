@@ -5,7 +5,9 @@ namespace PowerComponents\LivewirePowerGrid\Traits;
 use Illuminate\Database\Eloquent as Eloquent;
 use Illuminate\Support\{Collection, Str, Stringable};
 use PowerComponents\LivewirePowerGrid\DataSource\Builder;
-use PowerComponents\LivewirePowerGrid\{PowerGridComponent, ProcessDataSource};
+use PowerComponents\LivewirePowerGrid\{DataSource\ProcessDataSource,
+    DataSource\Processors\DataSourceBase,
+    PowerGridComponent};
 
 /** @codeCoverageIgnore */
 trait ExportableJob
@@ -34,7 +36,7 @@ trait ExportableJob
     private function prepareToExport(array $properties = []): Eloquent\Collection|Collection
     {
         /** @phpstan-ignore-next-line */
-        $processDataSource = tap(ProcessDataSource::fillData($this->componentTable, $properties), fn ($datasource) => $datasource->get());
+        $processDataSource = tap(ProcessDataSource::make($this->componentTable, $properties), fn ($datasource) => $datasource->get());
 
         $inClause = $processDataSource->component->filtered ?? [];
 
@@ -58,6 +60,6 @@ trait ExportableJob
             ->orderBy($sortField, $processDataSource->component->sortDirection)
             ->get();
 
-        return $processDataSource->transform($results, $this->componentTable);
+        return DataSourceBase::transform($results, $this->componentTable);
     }
 }

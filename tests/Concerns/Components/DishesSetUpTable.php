@@ -4,10 +4,12 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Button, Column, Footer, Header, PowerGrid, PowerGridComponent, PowerGridFields};
+use PowerComponents\LivewirePowerGrid\{Button, Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class DishesSetUpTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-setup-table';
+
     public bool $join = false;
 
     public bool $testHeader = false;
@@ -26,7 +28,7 @@ class DishesSetUpTable extends PowerGridComponent
 
         if ($this->testHeader) {
             return [
-                Header::make()
+                PowerGrid::header()
                     ->showSearchInput()
                     ->includeViewOnTop('livewire-powergrid::tests.header-top')
                     ->includeViewOnBottom('livewire-powergrid::tests.header-bottom'),
@@ -36,7 +38,7 @@ class DishesSetUpTable extends PowerGridComponent
 
         if ($this->testFooter) {
             return [
-                Footer::make()
+                PowerGrid::footer()
                     ->includeViewOnTop('livewire-powergrid::tests.footer-top')
                     ->includeViewOnBottom('livewire-powergrid::tests.footer-bottom'),
             ];
@@ -92,12 +94,12 @@ class DishesSetUpTable extends PowerGridComponent
         ];
     }
 
-    public function actions(): array
+    public function actions($row): array
     {
         return [
             Button::make('toggleDetail', 'Toggle Detail')
                 ->class('text-center')
-                ->toggleDetail(),
+                ->toggleDetail($row->id),
         ];
     }
 }

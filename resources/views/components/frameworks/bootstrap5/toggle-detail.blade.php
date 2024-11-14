@@ -1,6 +1,5 @@
 <td
-    class="{{ data_get($theme, 'tdBodyClass') }}"
-    style="{{  data_get($theme, 'tdBodyStyle') }}"
+    class="{{ theme_style($theme, 'table.body.td') }}"
 >
     <div
         class="cursor-pointer"

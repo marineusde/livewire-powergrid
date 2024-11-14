@@ -5,7 +5,7 @@ use PowerComponents\LivewirePowerGrid\Tests\Concerns\Components\DishesSetUpTable
 
 use function PowerComponents\LivewirePowerGrid\Tests\Plugins\livewire;
 
-use PowerComponents\LivewirePowerGrid\{Cache, Footer};
+use PowerComponents\LivewirePowerGrid\{Facades\PowerGrid};
 
 it('show includeViewOnTop/Bottom - Header', function () {
     livewire(DishesSetUpTable::class, ['testHeader' => true])
@@ -34,10 +34,9 @@ it('cache work properly with tags - rememberForever', function () {
 
     /** @var DishesSetUpTable $component */
     $component = livewire(DishesSetUpTable::class, ['testCache' => [
-        Cache::make()
-            ->prefix('test-')
-            ->forever(),
-        Footer::make()
+        PowerGrid::cache()
+            ->prefix('test-'),
+        PowerGrid::footer()
             ->showPerPage(15),
     ]]);
 
@@ -45,10 +44,9 @@ it('cache work properly with tags - rememberForever', function () {
         ->name->toBe('cache')
         ->prefix->toBe('test-')
         ->enabled->toBe(true)
-        ->forever->toBe(true)
         ->ttl->toBe(300);
 
-    $tag      = 'test-powergrid-dishes-default';
+    $tag      = 'test-powergrid-dishes-testing-dishes-setup-table';
     $cacheKey = '{"page":1}-{"perPage":15}-{"search":""}-{"sortDirection":"asc"}-{"sortField":"id"}-{"filters":[]}-{"sortArray":[]}';
 
     $tags = \Illuminate\Support\Facades\Cache::tags($tag);
@@ -84,19 +82,18 @@ it('cache work properly with tags - remember', function () {
 
     /** @var DishesSetUpTable|\Livewire\Features\SupportTesting\Testable $component */
     $component = livewire(DishesSetUpTable::class, ['testCache' => [
-        Cache::make()
+        PowerGrid::cache()
             ->ttl(360),
-        Footer::make()
+        PowerGrid::footer()
             ->showPerPage(15),
     ]]);
 
     expect($component->setUp['cache'])
         ->name->toBe('cache')
         ->enabled->toBe(true)
-        ->forever->toBe(false)
         ->ttl->toBe(360);
 
-    $tag      = 'powergrid-dishes-default';
+    $tag      = 'powergrid-dishes-testing-dishes-setup-table';
     $cacheKey = '{"page":1}-{"perPage":15}-{"search":""}-{"sortDirection":"asc"}-{"sortField":"id"}-{"filters":[]}-{"sortArray":[]}';
 
     $tags = \Illuminate\Support\Facades\Cache::tags($tag);
@@ -132,17 +129,16 @@ it('cache work properly with tags - customTag', function () {
 
     /** @var DishesSetUpTable|\Livewire\Features\SupportTesting\Testable $component */
     $component = livewire(DishesSetUpTable::class, ['testCache' => [
-        Cache::make()
+        PowerGrid::cache()
             ->customTag('my-custom-tag')
             ->ttl(360),
-        Footer::make()
+        PowerGrid::footer()
             ->showPerPage(15),
     ]]);
 
     expect($component->setUp['cache'])
         ->name->toBe('cache')
         ->enabled->toBe(true)
-        ->forever->toBe(false)
         ->ttl->toBe(360);
 
     $tag      = 'my-custom-tag';

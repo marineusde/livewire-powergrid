@@ -4,17 +4,12 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    Footer,
-    Header,
-    PowerGrid,
-    PowerGridComponent,
-    PowerGridFields,
-};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields,};
 
 class DishTableBase extends PowerGridComponent
 {
+    public string $tableName = 'testing-dish-table';
+
     public bool $join = false;
 
     public function setUp(): array
@@ -22,10 +17,10 @@ class DishTableBase extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -59,9 +54,6 @@ class DishTableBase extends PowerGridComponent
         return PowerGrid::fields()
             ->add('id')
             ->add('name')
-            ->add('chef_name', function (Dish $dish) {
-                return $dish->chef->name;
-            })
             ->add('category_id');
     }
 
@@ -76,23 +68,14 @@ class DishTableBase extends PowerGridComponent
                 ->searchable()
                 ->sortable(),
 
-            Column::make('Chef', 'chef_name')
-                ->searchable()
-                ->sortable(),
-
             Column::make('Category', 'category_name'),
 
             Column::action('Action'),
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

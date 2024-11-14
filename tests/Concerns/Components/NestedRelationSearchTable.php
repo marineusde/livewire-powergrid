@@ -4,16 +4,18 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Column, Header, PowerGrid, PowerGridComponent, PowerGridFields};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class NestedRelationSearchTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-nested-relation-search-table';
+
     public bool $join = false;
 
     public function setUp(): array
     {
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
         ];
     }
@@ -64,7 +66,7 @@ class NestedRelationSearchTable extends PowerGridComponent
                 ->searchable()
                 ->sortable(),
 
-            Column::make('Restaurant', 'restaurant_name')
+            Column::make('Restaurant', 'restaurant_name', 'restaurants.name')
                 ->searchable()
                 ->sortable(),
         ];
@@ -77,13 +79,8 @@ class NestedRelationSearchTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

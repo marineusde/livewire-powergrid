@@ -3,15 +3,12 @@
 namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Support\Collection;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    PowerGrid,
-    PowerGridComponent,
-    PowerGridFields
-};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class NoDataCollectionTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-no-data-collection-table';
+
     public function datasource(): Collection
     {
         return collect([]);
@@ -53,13 +50,8 @@ class NoDataCollectionTable extends PowerGridComponent
         return [];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

@@ -14,6 +14,22 @@ return [
     'theme' => \PowerComponents\LivewirePowerGrid\Themes\Tailwind::class,
     //'theme' => \PowerComponents\LivewirePowerGrid\Themes\Bootstrap5::class,
 
+    'cache_ttl' => null,
+
+    'icon_resources' => [
+        'paths' => [
+            // 'default' => 'resources/views/components/icons',
+            // 'outline' => 'vendor/wireui/wireui/resources/views/components/icons/outline',
+            // 'solid'   => 'vendor/wireui/wireui/resources/views/components/icons/solid',
+        ],
+
+        'allowed' => [
+            // 'pencil',
+        ],
+
+        'attributes' => ['class' => 'w-5 text-red-600'],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Plugins
@@ -95,32 +111,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cache
-    |--------------------------------------------------------------------------
-    |
-    | Cache is enabled by default to improve search performance when using collections.
-    | When enabled, data is reloaded whenever the page is refreshed or a field is updated.
-    |
-    */
-
-    'cached_data' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | New Release Notification
-    |--------------------------------------------------------------------------
-    |
-    | PowerGrid can verify if a new release is available when you create a new PowerGrid Table.
-    |
-    | This feature depends on composer/composer.
-    | To install, run: `composer require composer/composer --dev`
-    |
-    */
-
-    'check_version' => false,
-
-    /*
-    |--------------------------------------------------------------------------
     | Exportable class
     |--------------------------------------------------------------------------
     |
@@ -132,10 +122,6 @@ return [
         'openspout_v4' => [
             'xlsx' => \PowerComponents\LivewirePowerGrid\Components\Exports\OpenSpout\v4\ExportToXLS::class,
             'csv'  => \PowerComponents\LivewirePowerGrid\Components\Exports\OpenSpout\v4\ExportToCsv::class,
-        ],
-        'openspout_v3' => [
-            'xlsx' => \PowerComponents\LivewirePowerGrid\Components\Exports\OpenSpout\v3\ExportToXLS::class,
-            'csv'  => \PowerComponents\LivewirePowerGrid\Components\Exports\OpenSpout\v3\ExportToCsv::class,
         ],
     ],
 

@@ -4,11 +4,11 @@ namespace PowerComponents\LivewirePowerGrid\Components\Exports\OpenSpout\v4;
 
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Exception\IOException;
-use OpenSpout\Writer\CSV\Writer;
+use OpenSpout\Writer\CSV\{Options, Writer};
 use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use PowerComponents\LivewirePowerGrid\Components\Exports\Contracts\ExportInterface;
 use PowerComponents\LivewirePowerGrid\Components\Exports\Export;
-use PowerComponents\LivewirePowerGrid\Exportable;
+use PowerComponents\LivewirePowerGrid\{Components\SetUp\Exportable};
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /** @codeCoverageIgnore */
@@ -32,12 +32,13 @@ class ExportToCsv extends Export implements ExportInterface
      */
     public function build(Exportable|array $exportOptions): void
     {
-        $data = $this->prepare($this->data, $this->columns);
+        $stripTags = boolval(data_get($exportOptions, 'stripTags', false));
+        $data      = $this->prepare($this->data, $this->columns, $stripTags);
 
         $csvSeparator = strval(data_get($exportOptions, 'csvSeparator', ','));
         $csvDelimiter = strval(data_get($exportOptions, 'csvDelimiter', '"'));
 
-        $csvOptions                  = new \OpenSpout\Writer\CSV\Options();
+        $csvOptions                  = new Options();
         $csvOptions->FIELD_DELIMITER = $csvSeparator;
         $csvOptions->FIELD_ENCLOSURE = $csvDelimiter;
 

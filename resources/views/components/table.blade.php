@@ -1,10 +1,7 @@
-@inject('actionRulesClass', 'PowerComponents\LivewirePowerGrid\Components\Rules\RulesController')
-@use('PowerComponents\LivewirePowerGrid\Components\Rules\RuleManager')
-
 <x-livewire-powergrid::table-base
-    :ready-to-load="$readyToLoad"
-    :theme="$theme"
-    :table-name="$tableName"
+    :$readyToLoad
+    :$tableName
+    :$theme
     :lazy="!is_null(data_get($setUp, 'lazy'))"
 >
     <x-slot:header>
@@ -24,67 +21,54 @@
             @includeWhen($headerTotalColumn, 'livewire-powergrid::components.table-header')
 
             @if (empty(data_get($setUp, 'lazy')))
-                @foreach ($data as $row)
-                    @if (!isset($row->{$checkboxAttribute}) && $checkbox)
-                        @php throw new Exception('To use checkboxes, you must define a unique key attribute in your data source.') @endphp
-                    @endif
-                    @php
-                        $rowId = data_get($row, $this->realPrimaryKey);
 
-                        $class = data_get($theme, 'table.trBodyClass');
+                @if (isset($setUp['detail']))
+                    @foreach ($data as $row)
+                        @php
+                            $rowId = data_get($row, $this->realPrimaryKey);
+                            $class = theme_style($theme, 'table.body.tr');
+                        @endphp
 
-                        $rulesValues = $actionRulesClass->recoverFromAction($row, RuleManager::TYPE_ROWS);
-
-                        $applyRulesLoop = true;
-
-                        $trAttributesBag = new \Illuminate\View\ComponentAttributeBag();
-                        $trAttributesBag = $trAttributesBag->merge(['class' => $class]);
-
-                        if (method_exists($this, 'actionRules')) {
-                            $applyRulesLoop = $actionRulesClass->loop($this->actionRules($row), $loop);
-                        }
-
-                        if (filled($rulesValues['setAttributes']) && $applyRulesLoop) {
-                            foreach ($rulesValues['setAttributes'] as $rulesAttributes) {
-                                $trAttributesBag = $trAttributesBag->merge([
-                                    $rulesAttributes['attribute'] => $rulesAttributes['value'],
-                                ]);
-                            }
-                        }
-                    @endphp
-
-                    @if (isset($setUp['detail']))
                         <tbody
-                            wire:key="tbody-{{ $rowId }}"
-                            {{ $trAttributesBag }}
-                            x-data="{ detailState: @entangle('setUp.detail.state.' . $rowId) }"
+                            wire:key="tbody-{{ substr($rowId, 0, 6) }}"
+                            class="{{ $class }}"
                         >
                             @include('livewire-powergrid::components.row', [
                                 'rowIndex' => $loop->index + 1,
                             ])
-                            <tr
-                                x-show="detailState"
-                                style="{{ data_get($theme, 'table.trBodyStyle') }}"
-                                {{ $trAttributesBag }}
-                            >
-                                @include('livewire-powergrid::components.table.detail')
-                            </tr>
+                            @if (data_get($setUp, 'detail.state.' . $rowId))
+                                <tr
+                                    class="{{ $class }}"
+                                >
+                                    @include('livewire-powergrid::components.table.detail')
+                                </tr>
+                            @endif
                         </tbody>
-                    @else
+
+                        @includeWhen(isset($setUp['responsive']),
+                            'livewire-powergrid::components.expand-container')
+                    @endforeach
+                @else
+                    @foreach ($data as $row)
+                        @php
+                            $rowId = data_get($row, $this->realPrimaryKey);
+                            $class = theme_style($theme, 'table.body.tr');
+                        @endphp
+
                         <tr
-                            wire:key="tbody-{{ $rowId }}"
-                            style="{{ data_get($theme, 'table.trBodyStyle') }}"
-                            {{ $trAttributesBag }}
+                            wire:replace.self
+                            x-data="pgRowAttributes({ rowId: @js($rowId), defaultClasses: @js($class), rules: @js($row->__powergrid_rules) })"
+                            x-bind="getAttributes"
                         >
                             @include('livewire-powergrid::components.row', [
                                 'rowIndex' => $loop->index + 1,
                             ])
                         </tr>
-                    @endif
 
-                    @includeWhen(isset($setUp['responsive']),
-                        'livewire-powergrid::components.expand-container')
-                @endforeach
+                        @includeWhen(isset($setUp['responsive']),
+                            'livewire-powergrid::components.expand-container')
+                    @endforeach
+                @endif
             @else
                 <div>
                     @foreach (range(0, data_get($setUp, 'lazy.items')) as $item)
@@ -95,18 +79,24 @@
 
                         <livewire:lazy-child
                             key="{{ $this->getLazyKeys }}"
+                            :parentId="$this->getId()"
                             :child-index="$item"
-                            :$this->realPrimaryKey
+                            :primary-key="$primaryKey"
+                            real-primary-key="{{ $this->realPrimaryKey }}"
                             :$radio
                             :$radioAttribute
                             :$checkbox
                             :$checkboxAttribute
-                            :$theme
+                            :theme="$theme"
                             :$setUp
                             :$tableName
                             :parentName="$this->getName()"
                             :columns="$this->visibleColumns"
-                            :data="\PowerComponents\LivewirePowerGrid\ProcessDataSource::transform($data->skip($skip)->take($take), $this)"
+                            :data="\PowerComponents\LivewirePowerGrid\DataSource\Processors\DataSourceBase::transform(
+                                $data->skip($skip)->take($take),
+                                $this,
+                                true,
+                            )"
                         />
                     @endforeach
                 </div>
@@ -114,5 +104,6 @@
 
             @includeWhen($footerTotalColumn, 'livewire-powergrid::components.table-footer')
         @endif
+
     </x-slot:body>
 </x-livewire-powergrid::table-base>

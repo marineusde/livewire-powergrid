@@ -2,143 +2,159 @@
 
 namespace PowerComponents\LivewirePowerGrid\Themes;
 
-use PowerComponents\LivewirePowerGrid\Themes\Components\{Actions,
-    Checkbox,
-    Cols,
-    Editable,
-    FilterBoolean,
-    FilterDatePicker,
-    FilterInputText,
-    FilterMultiSelect,
-    FilterNumber,
-    FilterSelect,
-    Footer,
-    Radio,
-    SearchBox,
-    Table,
-    Toggleable};
-
-class Bootstrap5 extends ThemeBase
+class Bootstrap5 extends Theme
 {
     public string $name = 'bootstrap5';
 
-    public function table(): Table
+    public function table(): array
     {
-        return Theme::table('table table-bordered table-hover table-striped table-checkable table-highlight-head mb-2')
-            ->div('table-responsive col-md-12', 'margin: 10px 0 10px;')
-            ->thead('')
-            ->thAction('')
-            ->tdAction('')
-            ->tr('')
-            ->th('', 'white-space: nowrap;min-width: 50px;font-size: 0.75rem;color: #6b6a6a;padding-top: 8px;padding-bottom: 8px;')
-            ->tbody('')
-            ->tdBodyEmpty('', 'vertical-align: middle; line-height: normal;')
-            ->tdBodyTotalColumns('', 'font-size: 0.875rem; line-height: 1.25rem; --tw-text-opacity: 1; color: rgb(76 79 82 / var(--tw-text-opacity)); padding-left: 0.75rem; padding-right: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem;')
-            ->tdBody('', 'vertical-align: middle; line-height: normal;white-space: nowrap;');
+        return [
+            'layout' => [
+                'base'      => 'pt-3 px-sm-3 px-lg-5 align-middle d-inline-block',
+                'div'       => 'table-responsive col-md-12 my-2 mx-0',
+                'table'     => 'table-hover table-striped w-100',
+                'container' => 'my-0 mx-sm-n1 mx-lg-n3 overflow-x-auto',
+                'actions'   => 'd-flex gap-1',
+            ],
+
+            'header' => [
+                'thead'    => '',
+                'tr'       => '',
+                'th'       => 'fw-bold text-secondary text-nowrap small py-2',
+                'thAction' => '',
+            ],
+
+            'body' => [
+                'tbody'              => 'table-group-divider',
+                'tbodyEmpty'         => '',
+                'tr'                 => '',
+                'td'                 => 'align-middle text-nowrap px-3 py-2 lh-sm',
+                'tdEmpty'            => 'p-2 text-nowrap',
+                'tdSummarize'        => 'text-dark-emphasis small px-3 py-2 lh-sm',
+                'trSummarize'        => '',
+                'tdFilters'          => '',
+                'trFilters'          => '',
+                'tdActionsContainer' => 'd-flex gap-1',
+            ],
+        ];
     }
 
-    public function cols(): Cols
+    public function cols(): array
     {
-        return Theme::cols()
-            ->div('')
-            ->clearFilter('', 'color: #c30707; cursor:pointer; float: right;');
+        return [
+            'div' => '',
+        ];
     }
 
-    public function footer(): Footer
+    public function footer(): array
     {
-        return Theme::footer()
-            ->view($this->root() . '.footer')
-            ->select('');
+        return [
+            'view'                   => $this->root() . '.footer',
+            'select'                 => '',
+            'footer'                 => 'mt-50 pb-1 w-100 align-items-end px-1 d-flex flex-wrap justify-content-sm-center justify-content-md-between',
+            'footer_with_pagination' => '',
+        ];
     }
 
-    public function actions(): Actions
+    public function toggleable(): array
     {
-        return Theme::actions()
-            ->tdBody('text-center')
-            ->rowsBtn('');
+        return [
+            'view'  => $this->root() . '.toggleable',
+            'base'  => 'form-check form-switch',
+            'label' => 'form-check-label',
+            'input' => 'form-check-input',
+            'role'  => 'switch',
+        ];
     }
 
-    public function toggleable(): Toggleable
+    public function editable(): array
     {
-        return Theme::toggleable()
-            ->view($this->root() . '.toggleable');
+        return [
+            'view'  => $this->root() . '.editable',
+            'input' => 'form-control',
+        ];
     }
 
-    public function editable(): Editable
+    public function checkbox(): array
     {
-        return Theme::editable()
-            ->view($this->root() . '.editable')
-            ->span('d-flex justify-content-between')
-            ->button('width: 100%;text-align: left;border: 0;padding: 4px;background: none')
-            ->input('form-control shadow-none');
+        return [
+            'th'    => 'fs-6 text-center',
+            'base'  => 'form-check',
+            'label' => 'form-check-label',
+            'input' => 'form-check-input',
+        ];
     }
 
-    public function checkbox(): Checkbox
+    public function radio(): array
     {
-        return Theme::checkbox()
-            ->th('', 'font-size: 1rem !important;text-align:center')
-            ->div('form-check')
-            ->label('form-check-label')
-            ->input('form-check-input shadow-none');
+        return [
+            'th'    => '',
+            'base'  => 'form-check',
+            'label' => 'form-check-label',
+            'input' => 'form-check-input',
+        ];
     }
 
-    public function radio(): Radio
+    public function filterBoolean(): array
     {
-        return Theme::radio()
-            ->th('')
-            ->label('form-check-label')
-            ->input('form-check-input');
+        return [
+            'view'   => $this->root() . '.filters.boolean',
+            'base'   => '',
+            'select' => 'form-control form-select form-select-sm',
+        ];
     }
 
-    public function filterBoolean(): FilterBoolean
+    public function filterDatePicker(): array
     {
-        return Theme::filterBoolean()
-            ->view($this->root() . '.filters.boolean')
-            ->select('form-control form-select shadow-none');
+        return [
+            'base'  => '',
+            'view'  => $this->root() . '.filters.date-picker',
+            'input' => 'form-control form-control-sm',
+        ];
     }
 
-    public function filterDatePicker(): FilterDatePicker
+    public function filterMultiSelect(): array
     {
-        return Theme::filterDatePicker()
-            ->view($this->root() . '.filters.date-picker')
-            ->input('form-control shadow-none');
+        return [
+            'view'   => $this->root() . '.filters.multi-select',
+            'base'   => '',
+            'select' => 'form-control form-select form-select-sm',
+        ];
     }
 
-    public function filterMultiSelect(): FilterMultiSelect
+    public function filterNumber(): array
     {
-        return Theme::filterMultiSelect()
-            ->view($this->root() . '.filters.multi-select');
+        return [
+            'view'  => $this->root() . '.filters.number',
+            'input' => 'form-control form-control-sm text-12',
+        ];
     }
 
-    public function filterNumber(): FilterNumber
+    public function filterSelect(): array
     {
-        return Theme::filterNumber()
-            ->base(attrStyle: 'min-width: 85px !important')
-            ->view($this->root() . '.filters.number')
-            ->input('form-control shadow-none');
+        return [
+            'view'   => $this->root() . '.filters.select',
+            'base'   => '',
+            'select' => 'form-control form-select-sm form-select',
+        ];
     }
 
-    public function filterSelect(): FilterSelect
+    public function filterInputText(): array
     {
-        return Theme::filterSelect()
-            ->view($this->root() . '.filters.select')
-            ->select('form-control form-select shadow-none');
+        return [
+            'view'   => $this->root() . '.filters.input-text',
+            'base'   => '',
+            'select' => 'form-control form-select-sm mb-1 form-select',
+            'input'  => 'form-control form-control-sm',
+        ];
     }
 
-    public function filterInputText(): FilterInputText
+    public function searchBox(): array
     {
-        return Theme::filterInputText()
-            ->base(attrStyle: 'min-width: 165px !important')
-            ->view($this->root() . '.filters.input-text')
-            ->select('form-control mb-1 shadow-none form-select')
-            ->input('form-control shadow-none');
-    }
-
-    public function searchBox(): SearchBox
-    {
-        return Theme::searchBox()
-            ->input('col-12 col-sm-8 form-control')
-            ->iconSearch('bi bi-search')
-            ->iconClose('');
+        return [
+            'input'      => 'col-12 col-sm-8 form-control',
+            'iconSearch' => 'bi bi-search',
+            'iconClose'  => '',
+        ];
     }
 }

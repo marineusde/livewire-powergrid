@@ -4,64 +4,76 @@ namespace PowerComponents\LivewirePowerGrid;
 
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\{Factory, View};
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Foundation\Application;
 use Illuminate\Pagination\{LengthAwarePaginator, Paginator};
-use Illuminate\Support\{Collection as BaseCollection, Facades\Cache};
-
+use Illuminate\Support\{Collection as BaseCollection, Facades\Cache, Facades\DB};
 use Livewire\{Attributes\Computed, Component, WithPagination};
-
+use PowerComponents\LivewirePowerGrid\DataSource\ProcessDataSource;
+use PowerComponents\LivewirePowerGrid\DataSource\Processors\{DataSourceBase};
 use PowerComponents\LivewirePowerGrid\Events\PowerGridPerformanceData;
-
-use PowerComponents\LivewirePowerGrid\Themes\ThemeBase;
-use Throwable;
+use PowerComponents\LivewirePowerGrid\Exceptions\TableNameCannotCalledDefault;
 
 /**
- * @property-read mixed $getCachedData
+ * @property-read mixed $getRecords
  * @property-read bool $hasColumnFilters
  * @property-read array|BaseCollection $visibleColumns
+ * @property-read string $realPrimaryKey
  */
 class PowerGridComponent extends Component
 {
-    use WithPagination;
     use Concerns\Base;
-    use Concerns\Sorting;
     use Concerns\Checkbox;
+    use Concerns\Radio;
     use Concerns\Filter;
-    use Concerns\Persist;
-    use Concerns\LazyManager;
-    use Concerns\ToggleDetail;
+    use Concerns\HasActions;
     use Concerns\Hooks;
+    use Concerns\LazyManager;
     use Concerns\Listeners;
-    use Concerns\Summarize;
+    use Concerns\Persist;
     use Concerns\SoftDeletes;
+    use Concerns\Sorting;
+    use Concerns\Summarize;
+    use Concerns\ToggleDetail;
+    use Concerns\ManageRow;
+    use WithPagination;
+
+    public array $theme = [];
 
     public function mount(): void
     {
+        $themeClass = $this->customThemeClass() ?? strval(config('livewire-powergrid.theme'));
+
+        $this->theme = app($themeClass)->apply();
+
+        $this->prepareActionsResources();
+        $this->prepareRowTemplates();
+
         $this->readyToLoad = !$this->deferLoading;
 
         foreach ($this->setUp() as $setUp) {
             $this->setUp[$setUp->name] = $setUp;
         }
 
+        $this->throwTableName();
         $this->throwColumnAction();
 
         $this->columns = $this->columns();
 
-        $this->resolveTotalRow();
-
         $this->restoreState();
+
+        $this->resolveSummarizeColumn();
+    }
+
+    public function hydrate(): void
+    {
+        DataSourceBase::$actionsHtml = [];
     }
 
     public function fetchDatasource(): void
     {
         $this->readyToLoad = true;
-    }
-
-    public function fields(): PowerGridFields
-    {
-        return PowerGrid::fields();
     }
 
     public function updatedPage(): void
@@ -94,27 +106,73 @@ class PowerGridComponent extends Component
     public function hasColumnFilters(): bool
     {
         return collect($this->columns)
-                ->filter(fn ($column) => filled($column->filters))->count() > 0;
+            ->filter(fn ($column) => filled(data_get($column, 'filters')))->count() > 0;
     }
 
     #[Computed]
     public function visibleColumns(): BaseCollection
     {
         return collect($this->columns)
-            ->where('forceHidden', false);
+            ->where('forceHidden', false)
+            ->map(function ($column) {
+                data_forget($column, 'rawQueries');
+
+                return $column;
+            });
     }
 
     #[Computed]
-    protected function getCachedData(): mixed
+    protected function getRecords(): mixed
     {
-        $start = microtime(true);
+        if (!$this->readyToLoad) {
+            return collect();
+        }
 
-        if (!Cache::supportsTags() || !boolval(data_get($this->setUp, 'cache.enabled'))) {
-            $results = $this->readyToLoad ? $this->fillData() : collect();
+        if (boolval(data_get($this->setUp, 'cache.enabled')) && Cache::supportsTags()) {
+            return $this->getRecordsFromCache();
+        }
 
-            $retrieveData = round((microtime(true) - $start) * 1000);
+        return $this->getRecordsDataSource();
+    }
 
-            $queries = $this->processDataSourceInstance?->queryLog() ?? [];
+    private function getRecordsFromCache(): mixed
+    {
+        $prefix    = strval(data_get($this->setUp, 'cache.prefix'));
+        $customTag = strval(data_get($this->setUp, 'cache.tag'));
+        $ttl       = intval(data_get($this->setUp, 'cache.ttl'));
+
+        $tag      = $prefix . ($customTag ?: 'powergrid-' . $this->datasource()->getModel()->getTable() . '-' . $this->tableName);
+        $cacheKey = implode('-', $this->getCacheKeys());
+
+        $results = Cache::tags($tag)->remember($cacheKey, $ttl, fn () => ProcessDataSource::make($this)->get());
+
+        if ($this->measurePerformance) {
+            app(Dispatcher::class)->dispatch(
+                new PowerGridPerformanceData(
+                    tableName: $this->tableName,
+                    retrieveDataInMs: 0,
+                    isCached: true,
+                )
+            );
+        }
+
+        return $results;
+    }
+
+    private function getRecordsDataSource(): Paginator|MorphToMany|\Illuminate\Contracts\Pagination\LengthAwarePaginator|LengthAwarePaginator|BaseCollection
+    {
+        if ($this->measurePerformance) {
+            DB::enableQueryLog();
+        }
+
+        $start        = microtime(true);
+        $results      = ProcessDataSource::make($this)->get();
+        $retrieveData = round((microtime(true) - $start) * 1000);
+
+        if ($this->measurePerformance) {
+            $queries = DB::getQueryLog();
+
+            DB::disableQueryLog();
 
             /** @var float $queriesTime */
             $queriesTime = collect($queries)->sum('time');
@@ -123,39 +181,12 @@ class PowerGridComponent extends Component
                 new PowerGridPerformanceData(
                     $this->tableName,
                     retrieveDataInMs: $retrieveData,
+                    transformDataInMs: app(DataSourceBase::class)->transformTime(),
                     queriesTimeInMs: $queriesTime,
                     queries: $queries,
                 )
             );
-
-            return $results;
         }
-
-        if (!$this->readyToLoad) {
-            return collect();
-        }
-
-        $prefix    = strval(data_get($this->setUp, 'cache.prefix'));
-        $customTag = strval(data_get($this->setUp, 'cache.tag'));
-        $forever   = boolval(data_get($this->setUp, 'cache.forever', false));
-        $ttl       = intval(data_get($this->setUp, 'cache.ttl'));
-
-        $tag      = $prefix . ($customTag ?: 'powergrid-' . $this->datasource()->getModel()->getTable() . '-' . $this->tableName);
-        $cacheKey = join('-', $this->getCacheKeys());
-
-        $results = $forever
-            ? Cache::tags($tag)->rememberForever($cacheKey, fn () => $this->fillData())
-            : Cache::tags($tag)->remember($cacheKey, $ttl, fn () => $this->fillData());
-
-        $time = round((microtime(true) - $start) * 1000);
-
-        app(Dispatcher::class)->dispatch(
-            new PowerGridPerformanceData(
-                $this->tableName,
-                $time,
-                isCached: true,
-            )
-        );
 
         return $results;
     }
@@ -184,39 +215,14 @@ class PowerGridComponent extends Component
         }
     }
 
-    private function getTheme(): array
+    private function throwTableName(): void
     {
-        $class = $this->template() ?? powerGridTheme();
-
-        if (app()->hasDebugModeEnabled()) {
-            /** @var ThemeBase $themeBase */
-            $themeBase = PowerGrid::theme($class);
-
-            return convertObjectsToArray((array) $themeBase->apply());
+        if (blank($this->tableName) || $this->tableName === "default") {
+            throw new TableNameCannotCalledDefault();
         }
-
-        /** @var array $theme */
-        $theme = Cache::rememberForever('powerGridTheme_' . $class, function () use ($class) {
-            /** @var ThemeBase $themeBase */
-            $themeBase = PowerGrid::theme($class);
-
-            return convertObjectsToArray((array) $themeBase->apply());
-        });
-
-        return $theme;
     }
 
-    /**
-     * @throws Exception
-     * @throws Throwable
-     */
-    public function fillData(): BaseCollection|LengthAwarePaginator|\Illuminate\Contracts\Pagination\LengthAwarePaginator|Paginator|MorphToMany
-    {
-        $this->processDataSourceInstance = ProcessDataSource::fillData($this);
-
-        return $this->processDataSourceInstance->get();
-    }
-
+    #[Computed]
     public function processNoDataLabel(): string
     {
         $noDataLabel = $this->noDataLabel();
@@ -225,7 +231,6 @@ class PowerGridComponent extends Component
             return $noDataLabel->with(
                 [
                     'noDataLabel' => trans('livewire-powergrid::datatable.labels.no_data'),
-                    'theme'       => $this->getTheme(),
                     'table'       => 'livewire-powergrid::components.table',
                     'data'        => [],
                 ]
@@ -240,17 +245,6 @@ class PowerGridComponent extends Component
         return view('livewire-powergrid::components.table.no-data-label');
     }
 
-    private function renderView(mixed $data): Application|Factory|View
-    {
-        $theme = $this->getTheme();
-
-        return view($theme['layout']['table'], [
-            'data'  => $data,
-            'theme' => $theme,
-            'table' => 'livewire-powergrid::components.table',
-        ]);
-    }
-
     public function getPublicPropertiesDefinedInComponent(): array
     {
         return collect((new \ReflectionClass($this))->getProperties(\ReflectionProperty::IS_PUBLIC))
@@ -261,27 +255,30 @@ class PowerGridComponent extends Component
             ->all();
     }
 
-    /**
-     * @throws Exception|Throwable
-     */
     public function render(): Application|Factory|View
     {
-        $this->columns = collect($this->columns)->map(fn ($column) => (object) $column)->toArray();
+        if (isset($this->setUp['lazy'])) {
+            $cacheKey = 'lazy-tmp-' . $this->getId() . '-' . implode('-', $this->getCacheKeys());
 
-        $this->relationSearch = $this->relationSearch();
-        $this->searchMorphs   = $this->searchMorphs();
+            $data = Cache::remember($cacheKey, 60, fn () => $this->getRecords());
 
-        $data = $this->getCachedData();
-
-        if (empty(data_get($this->setUp, 'lazy'))) {
-            $this->resolveDetailRow($data);
+            /** @phpstan-ignore-next-line */
+            $this->totalCurrentPage = method_exists($data, 'items') ? count($data->items()) : $data->count();
+        } else {
+            $data = $this->getRecords();
         }
 
-        /** @phpstan-ignore-next-line */
-        $this->totalCurrentPage = method_exists($data, 'items') ? count($data->items()) : $data->count();
+        $this->storeActionsRowInJSWindow();
+
+        $this->storeActionsHeaderInJSWindow();
+
+        $this->resolveDetailRow($data);
 
         $this->resolveFilters();
 
-        return $this->renderView($data);
+        return view(theme_style($this->theme, 'layout.table'), [
+            'data'  => $data,
+            'table' => 'livewire-powergrid::components.table',
+        ]);
     }
 }

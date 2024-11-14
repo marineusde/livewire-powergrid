@@ -4,15 +4,12 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Order;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    PowerGrid,
-    PowerGridComponent,
-    PowerGridFields,
-};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields,};
 
 class OrderTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-order-table';
+
     public function datasource(): Builder
     {
         return Order::query();
@@ -21,6 +18,7 @@ class OrderTable extends PowerGridComponent
     public function fields(): PowerGridFields
     {
         return PowerGrid::fields()
+            ->add('id')
             ->add('name')
             ->add('tax')
             ->add('price')
@@ -40,13 +38,8 @@ class OrderTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

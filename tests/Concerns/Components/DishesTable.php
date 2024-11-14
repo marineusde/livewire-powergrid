@@ -6,18 +6,16 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use NumberFormatter;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Column,
-    Exportable,
-    Footer,
-    Header,
-    PowerGrid,
+use PowerComponents\LivewirePowerGrid\{Column,
+    Components\SetUp\Exportable,
+    Facades\PowerGrid,
     PowerGridComponent,
-    PowerGridFields
-};
+    PowerGridFields};
 
 class DishesTable extends PowerGridComponent
 {
+    public string $tableName = 'dishes-table';
+
     public array $eventId = [];
 
     public array $testFilters = [];
@@ -47,15 +45,15 @@ class DishesTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Exportable::make('export')
+            PowerGrid::exportable('export')
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -87,34 +85,34 @@ class DishesTable extends PowerGridComponent
             ->add('active')
             ->add('serving_at')
             ->add('calories')
-            ->add('calories', function (Dish $dish) {
+            ->add('calories', function ($dish) {
                 return $dish->calories . ' kcal';
             })
-            ->add('category_id', function (Dish $dish) {
+            ->add('category_id', function ($dish) {
                 return $dish->category_id;
             })
-            ->add('category_name', function (Dish $dish) {
+            ->add('category_name', function ($dish) {
                 return $dish->category->name;
             })
             ->add('price')
-            ->add('price_EUR', function (Dish $dish) use ($fmt) {
+            ->add('price_EUR', function ($dish) use ($fmt) {
                 return $fmt->formatCurrency($dish->price, 'EUR');
             })
-            ->add('price_BRL', function (Dish $dish) {
+            ->add('price_BRL', function ($dish) {
                 return 'R$ ' . number_format($dish->price, 2, ',', '.'); //R$ 1.000,00
             })
             ->add('sales_price')
-            ->add('sales_price_BRL', function (Dish $dish) {
+            ->add('sales_price_BRL', function ($dish) {
                 $sales_price = $dish->price + ($dish->price * 0.15);
 
                 return 'R$ ' . number_format($sales_price, 2, ',', '.'); //R$ 1.000,00
             })
             ->add('in_stock')
-            ->add('in_stock_label', function (Dish $dish) {
+            ->add('in_stock_label', function ($dish) {
                 return ($dish->in_stock ? 'sim' : 'não');
             })
             ->add('produced_at')
-            ->add('produced_at_formatted', function (Dish $dish) {
+            ->add('produced_at_formatted', function ($dish) {
                 return Carbon::parse($dish->produced_at)->format('d/m/Y');
             });
     }
@@ -129,6 +127,9 @@ class DishesTable extends PowerGridComponent
                 ->field('id')
                 ->searchable()
                 ->sortable(),
+
+            Column::add()
+                ->field('stored_at'),
 
             Column::add()
                 ->title(__('Stored at'))
@@ -195,13 +196,8 @@ class DishesTable extends PowerGridComponent
         return $this->testFilters;
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

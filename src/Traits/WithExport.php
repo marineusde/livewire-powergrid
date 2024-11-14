@@ -11,7 +11,9 @@ use Illuminate\Support\{Collection, Str};
 use PowerComponents\LivewirePowerGrid\Components\Exports\Export;
 use PowerComponents\LivewirePowerGrid\DataSource\Builder;
 use PowerComponents\LivewirePowerGrid\Jobs\ExportJob;
-use PowerComponents\LivewirePowerGrid\{Exportable, ProcessDataSource};
+use PowerComponents\LivewirePowerGrid\{Components\SetUp\Exportable,
+    DataSource\ProcessDataSource,
+    DataSource\Processors\DataSourceBase};
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
@@ -98,7 +100,7 @@ trait WithExport
 
     private function putQueuesToBus(string $exportableClass, string $fileExtension): Collection
     {
-        $processDataSource = tap(ProcessDataSource::fillData($this), fn ($datasource) => $datasource->get());
+        $processDataSource = tap(ProcessDataSource::make($this), fn ($datasource) => $datasource->get());
 
         $this->exportedFiles = [];
         $filters             = $processDataSource?->component?->filters ?? [];
@@ -160,7 +162,7 @@ trait WithExport
      */
     public function prepareToExport(bool $selected = false): Eloquent\Collection|Support\Collection
     {
-        $processDataSource = tap(ProcessDataSource::fillData($this), fn ($datasource) => $datasource->get());
+        $processDataSource = tap(ProcessDataSource::make($this), fn ($datasource) => $datasource->get());
 
         $inClause = $processDataSource->component->filtered;
 
@@ -172,10 +174,10 @@ trait WithExport
             if ($inClause) {
                 $results = $processDataSource->get(isExport: true)->whereIn($this->primaryKey, $inClause);
 
-                return $processDataSource->transform($results, $this);
+                return DataSourceBase::transform($results, $this);
             }
 
-            return $processDataSource->transform($processDataSource->resolveCollection(), $this);
+            return DataSourceBase::transform($processDataSource->component->datasource(), $this);
         }
 
         /** @phpstan-ignore-next-line */
@@ -183,7 +185,7 @@ trait WithExport
 
         $sortField = Support\Str::of($processDataSource->component->sortField)->contains('.') ? $processDataSource->component->sortField : $currentTable . '.' . $processDataSource->component->sortField;
 
-        $results = $processDataSource->prepareDataSource()
+        $results = $processDataSource->component->datasource()
             ->where(
                 fn ($query) => Builder::make($query, $this)
                     ->filterContains()
@@ -195,7 +197,7 @@ trait WithExport
             ->orderBy($sortField, $processDataSource->component->sortDirection)
             ->get();
 
-        return $processDataSource->transform($results, $processDataSource->component);
+        return DataSourceBase::transform($results, $processDataSource->component);
     }
 
     public function exportToXLS(bool $selected = false): BinaryFileResponse|bool
@@ -243,7 +245,9 @@ trait WithExport
             ->setData($columnsWithHiddenState, $this->prepareToExport($selected));
 
         /** @phpstan-ignore-next-line  */
-        return $exportable->download($this->setUp['exportable']);
+        return $exportable->download(
+            exportOptions: $this->setUp['exportable']
+        );
     }
 
     private function getExportableClassFromConfig(string $exportType): string

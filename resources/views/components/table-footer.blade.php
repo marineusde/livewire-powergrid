@@ -1,12 +1,10 @@
 {{-- blade-formatter-enable --}}
 <tr
-    class="{{ data_get($theme, 'table.trBodyClass') }}"
-    style="{{ data_get($theme, 'table.trBodyStyle') }}"
+    class="{{ theme_style($theme, 'table.header.tr') }}"
 >
     @if (data_get($setUp, 'detail.showCollapseIcon'))
         <td
-            class="{{ data_get($theme, 'table.tdBodyClass') }}"
-            style="{{ data_get($theme, 'table.tdBodyStyle') }}"
+            class="{{ theme_style($theme, 'table.body.td') }}"
         ></td>
     @endif
     @if ($checkbox)
@@ -14,32 +12,31 @@
     @endif
     @foreach ($this->visibleColumns as $column)
         <td
-            class="{{ data_get($theme, 'table.tdBodyClassTotalColumns') . ' ' . $column->bodyClass ?? '' }}"
-            style="{{ $column->hidden === true ? 'display:none' : '' }}; {{ data_get($theme, 'table.tdBodyStyleTotalColumns') . ' ' . $column->bodyStyle ?? '' }}"
+            class="{{ theme_style($theme, 'table.body.tdSummarize') . ' ' . data_get($column, 'bodyClass') ?? '' }}"
+            style="{{ data_get($column, 'hidden') === true ? 'display:none;' : '' }} . {{ data_get($column, 'bodyStyle') ?? '' }}"
         >
             @include('livewire-powergrid::components.summarize', [
-                'sum' => $column->sum['footer'] ? data_get($column, 'summarize.sum') : null,
-                'labelSum' => $column->sum['label'],
+                'sum' => data_get($column, 'properties.summarize.sum.footer') ? data_get($column, 'properties.summarize_values.sum') : null,
+                'labelSum' =>  data_get($column, 'properties.summarize.sum.label'),
 
-                'count' => $column->count['footer'] ? data_get($column, 'summarize.count') : null,
-                'labelCount' => $column->count['label'],
+                'count' =>  data_get($column, 'properties.summarize.count.footer') ? data_get($column, 'properties.summarize_values.count') : null,
+                'labelCount' =>  data_get($column, 'properties.summarize.count.footer'),
 
-                'min' => $column->min['footer'] ? data_get($column, 'summarize.min') : null,
-                'labelMin' => $column->min['label'],
+                'min' =>  data_get($column, 'properties.summarize.min.footer') ? data_get($column, 'properties.summarize_values.min') : null,
+                'labelMin' =>  data_get($column, 'properties.summarize.min.footer'),
 
-                'max' => $column->max['footer'] ? data_get($column, 'summarize.max') : null,
-                'labelMax' => $column->max['label'],
+                'max' =>  data_get($column, 'properties.summarize.max.footer') ? data_get($column, 'properties.summarize_values.max') : null,
+                'labelMax' =>  data_get($column, 'properties.summarize.max.label'),
 
-                'avg' => $column->avg['footer'] ? data_get($column, 'summarize.avg') : null,
-                'labelAvg' => $column->avg['label'],
+                'avg' =>  data_get($column, 'properties.summarize.avg.footer') ? data_get($column, 'properties.summarize_values.avg') : null,
+                'labelAvg' =>  data_get($column, 'properties.summarize.avg.label'),
             ])
         </td>
     @endforeach
     @if (isset($actions) && count($actions))
         <th
-            class="{{ data_get($theme, 'table.thClass') . ' ' . $column->headerClass }}"
+            class="{{ theme_style($theme, 'table.header.th') . ' ' .  data_get($column, 'headerClass') }}"
             scope="col"
-            style="{{ data_get($theme, 'table.thStyle') }}"
             colspan="{{ count($actions) }}"
         >
         </th>

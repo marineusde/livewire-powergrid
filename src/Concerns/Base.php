@@ -3,7 +3,7 @@
 namespace PowerComponents\LivewirePowerGrid\Concerns;
 
 use Livewire\Attributes\Computed;
-use PowerComponents\LivewirePowerGrid\ProcessDataSource;
+use PowerComponents\LivewirePowerGrid\{Facades\PowerGrid, PowerGridFields};
 
 trait Base
 {
@@ -13,15 +13,13 @@ trait Base
 
     public bool $ignoreTablePrefix = true;
 
-    public string $tableName = 'default';
+    public string $tableName = '';
 
     public array $setUp = [];
 
     public bool $showErrorBag = false;
 
     public bool $rowIndex = true;
-
-    public array $searchMorphs = [];
 
     public bool $deferLoading = false;
 
@@ -31,21 +29,26 @@ trait Base
 
     public array $columns = [];
 
-    protected ?ProcessDataSource $processDataSourceInstance = null;
-
-    public array $actions = [];
-
     public array $headers = [];
 
     public string $search = '';
 
     public string $currentTable = '';
 
-    public array $relationSearch = [];
-
     public int $total = 0;
 
     public int $totalCurrentPage = 0;
+
+    public bool $supportModel = true;
+
+    public bool $paginateRaw = false;
+
+    public bool $measurePerformance = false;
+
+    public function fields(): PowerGridFields
+    {
+        return PowerGrid::fields();
+    }
 
     #[Computed]
     public function realPrimaryKey(): string
@@ -53,7 +56,7 @@ trait Base
         return $this->primaryKeyAlias ?? $this->primaryKey;
     }
 
-    public function template(): ?string
+    public function customThemeClass(): ?string
     {
         return null;
     }
@@ -89,6 +92,11 @@ trait Base
     }
 
     public function summarizeFormat(): array
+    {
+        return [];
+    }
+
+    public function rowTemplates(): array
     {
         return [];
     }

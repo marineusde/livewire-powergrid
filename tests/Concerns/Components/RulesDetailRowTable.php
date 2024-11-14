@@ -3,38 +3,39 @@
 namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use PowerComponents\LivewirePowerGrid\Facades\Rule;
-use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Button, Detail, Footer, Header};
+use PowerComponents\LivewirePowerGrid\{Button, Facades\PowerGrid};
 
 class RulesDetailRowTable extends DishTableBase
 {
+    public string $tableName = 'testing-rules-detail-row-table';
+
     public function setUp(): array
     {
         config()->set('livewire.inject_morph_markers', false);
 
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showToggleColumns()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
 
-            Detail::make()
+            PowerGrid::detail()
                 ->view('livewire-powergrid::tests.detail')
                 ->options(['name' => 'Luan'])
                 ->showCollapseIcon(),
         ];
     }
 
-    public function actions(): array
+    public function actions($row): array
     {
         return [
             Button::add('edit')
                 ->slot('<div id="edit">Toggle</div>')
                 ->class('text-center')
-                ->toggleDetail(),
+                ->toggleDetail($row->id),
         ];
     }
 
@@ -42,7 +43,7 @@ class RulesDetailRowTable extends DishTableBase
     {
         return [
             Rule::rows()
-                ->when(fn (Dish $dish) => $dish->id == 1)
+                ->when(fn ($dish) => $dish->id == 1)
                 ->detailView('components.detail-rules', ['test' => 1]),
         ];
     }

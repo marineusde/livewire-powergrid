@@ -4,19 +4,17 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{
-    Button,
+use PowerComponents\LivewirePowerGrid\{Button,
     Column,
+    Facades\PowerGrid,
     Facades\Rule,
-    Footer,
-    Header,
-    PowerGrid,
     PowerGridComponent,
-    PowerGridFields
-};
+    PowerGridFields};
 
 class DishesActionRulesTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-action-rules-table';
+
     public array $eventId = [];
 
     public bool $join = false;
@@ -46,10 +44,10 @@ class DishesActionRulesTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -104,7 +102,7 @@ class DishesActionRulesTable extends PowerGridComponent
         ];
     }
 
-    public function actions(): array
+    public function actions($row): array
     {
         return [
             Button::add('edit-stock-for-rules')
@@ -118,18 +116,13 @@ class DishesActionRulesTable extends PowerGridComponent
     {
         return [
             Rule::button('edit-stock-for-rules')
-                ->when(fn (Dish $dish) => $dish->id == 9)
+                ->when(fn ($dish) => $dish->id == 9)
                 ->disable(),
         ];
     }
 
-    public function bootstrap()
+    public function setTestThemeClass(string $themeClass): void
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
-    }
-
-    public function tailwind()
-    {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

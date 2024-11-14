@@ -1,32 +1,35 @@
-@use('PowerComponents\LivewirePowerGrid\Components\Rules\RuleManager')
 @php
-    $rulesValues = $actionRulesClass->recoverFromAction($row, RuleManager::TYPE_RADIO);
-
     $inputAttributes = new \Illuminate\View\ComponentAttributeBag([
-        'class' => data_get($theme, 'radio.inputClass'),
+        'class' => theme_style($theme, 'radio.input'),
     ]);
 
-    if (filled($rulesValues['setAttributes'])) {
-        foreach ($rulesValues['setAttributes'] as $rulesAttributes) {
+    $rules = collect($row->__powergrid_rules)
+        ->where('apply', true)
+        ->where('forAction', \PowerComponents\LivewirePowerGrid\Components\Rules\RuleManager::TYPE_RADIO)
+        ->last();
+
+    if (isset($rules['attributes'])) {
+        foreach ($rules['attributes'] as $key => $value) {
             $inputAttributes = $inputAttributes->merge([
-                $rulesAttributes['attribute'] => $rulesAttributes['value'],
+                $key => $value,
             ]);
         }
     }
+
+    $disable = (bool) data_get($rules, 'disable');
+    $hide = (bool) data_get($rules, 'hide');
 @endphp
-@if (filled($rulesValues['hide']))
+@if ($hide)
     <td
-        class="{{ data_get($theme, 'radio.tdClass') }}"
-        style="{{ data_get($theme, 'radio.tdStyle') }}"
+        class="{{ theme_style($theme, 'radio.td') }}"
     >
     </td>
-@elseif(filled($rulesValues['disable']))
+@elseif($disable)
     <td
-        class="{{ data_get($theme, 'radio.tdClass') }}"
-        style="{{ data_get($theme, 'radio.tdStyle') }}"
+        class="{{ theme_style($theme, 'radio.td') }}"
     >
-        <div class="{{ data_get($theme, 'radio.divClass') }}">
-            <label class="{{ data_get($theme, 'radio.labelClass')  }}">
+        <div class="{{ theme_style($theme, 'radio.base') }}">
+            <label class="{{ theme_style($theme, 'radio.label') }}">
                 <input
                     {{ $inputAttributes }}
                     disabled
@@ -37,11 +40,10 @@
     </td>
 @else
     <td
-        class="{{ data_get($theme, 'radio.thClass') }}"
-        style="{{ data_get($theme, 'radio.thStyle') }}"
+        class="{{ theme_style($theme, 'radio.th') }}"
     >
-        <div class="{{ data_get($theme, 'radio.divClass') }}">
-            <label class="{{ data_get($theme, 'radio.labelClass') }}">
+        <div class="{{ theme_style($theme, 'radio.base') }}">
+            <label class="{{ theme_style($theme, 'radio.label') }}">
                 <input
                     type="radio"
                     {{ $inputAttributes }}

@@ -4,11 +4,14 @@ namespace PowerComponents\LivewirePowerGrid\Tests\Concerns\Components;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use NumberFormatter;
 use PowerComponents\LivewirePowerGrid\Tests\Concerns\Models\Dish;
-use PowerComponents\LivewirePowerGrid\{Column, Footer, Header, PowerGrid, PowerGridComponent, PowerGridFields};
+use PowerComponents\LivewirePowerGrid\{Column, Facades\PowerGrid, PowerGridComponent, PowerGridFields};
 
 class DishesSearchableRawTable extends PowerGridComponent
 {
+    public string $tableName = 'testing-dishes-searchable-raw-table';
+
     public string $database = '';
 
     public function setUp(): array
@@ -16,10 +19,10 @@ class DishesSearchableRawTable extends PowerGridComponent
         $this->showCheckBox();
 
         return [
-            Header::make()
+            PowerGrid::header()
                 ->showSearchInput(),
 
-            Footer::make()
+            PowerGrid::footer()
                 ->showPerPage()
                 ->showRecordCount(),
         ];
@@ -46,21 +49,30 @@ class DishesSearchableRawTable extends PowerGridComponent
         return PowerGrid::fields()
             ->add('id')
             ->add('name')
+            ->add('price_formatted', function (Dish $row): string {
+                $formatter = new NumberFormatter('pt_BR', NumberFormatter::CURRENCY);
+
+                return $formatter->formatCurrency($row->price, 'BRL');
+            })
             ->add('produced_at_formatted');
     }
 
     public function columns(): array
     {
         $searchableRaw = match ($this->database) {
-            'sqlite' => 'STRFTIME("%d/%m/%Y", dishes.produced_at)',
-            'mysql'  => 'DATE_FORMAT(dishes.produced_at, "%d/%m/%Y")',
-            'pgsql'  => 'to_char(dishes.produced_at, \'DD/MM/YYYY\')::text',
+            'sqlite' => 'STRFTIME("%d/%m/%Y", dishes.produced_at) like ?',
+            'mysql'  => 'DATE_FORMAT(dishes.produced_at, "%d/%m/%Y") like ?',
+            'pgsql'  => 'to_char(dishes.produced_at, \'DD/MM/YYYY\')::text ilike ?',
             default  => ''
         };
 
         return [
             Column::make('ID', 'id')
-                ->searchable()
+                ->searchableRaw($this->database === 'pgsql' ? 'dishes.id::text ilike ?' : 'dishes.id like ?')
+                ->sortable(),
+
+            Column::make('Preço', 'price_formatted', 'price')
+                ->searchableRaw($this->database === 'pgsql' ? 'price::text ilike ?' : 'price like ?')
                 ->sortable(),
 
             Column::make('Prato', 'name')
@@ -76,13 +88,24 @@ class DishesSearchableRawTable extends PowerGridComponent
         ];
     }
 
-    public function bootstrap()
+    public function beforeSearch(string $field): string
     {
-        config(['livewire-powergrid.theme' => 'bootstrap']);
+        return $field === 'id'
+            ? preg_replace('/[^0-9]/', '', $this->search)
+            : $this->search;
     }
 
-    public function tailwind()
+    public function beforeSearchPrice(): float
     {
-        config(['livewire-powergrid.theme' => 'tailwind']);
+        return (float) str_replace(
+            ',',
+            '.',
+            preg_replace('/[^0-9,]/', '', $this->search)
+        );
+    }
+
+    public function setTestThemeClass(string $themeClass): void
+    {
+        config(['livewire-powergrid.theme' => $themeClass]);
     }
 }

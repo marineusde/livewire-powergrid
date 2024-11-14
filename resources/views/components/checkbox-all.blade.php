@@ -1,23 +1,22 @@
-@props([
-    'theme' => null,
-])
 <div>
     @php
-        $responsiveCheckboxColumnName = PowerComponents\LivewirePowerGrid\Responsive::CHECKBOX_COLUMN_NAME;
+        $responsiveCheckboxColumnName =
+            \PowerComponents\LivewirePowerGrid\Components\SetUp\Responsive::CHECKBOX_COLUMN_NAME;
 
-        $isCheckboxFixedOnResponsive = isset($this->setUp['responsive']) && in_array($responsiveCheckboxColumnName, data_get($this->setUp, 'responsive.fixedColumns')) ? true : false;
+        $isCheckboxFixedOnResponsive =
+            isset($this->setUp['responsive']) &&
+            in_array($responsiveCheckboxColumnName, data_get($this->setUp, 'responsive.fixedColumns'));
     @endphp
     <th
         @if ($isCheckboxFixedOnResponsive) fixed @endif
         scope="col"
-        class="{{ data_get($theme, 'thClass') }}"
-        style="{{ data_get($theme, 'thStyle') }}"
-        wire:key="{{ md5('checkbox-all') }}"
+        @class([theme_style($theme, 'table.header.th'), theme_style($theme, 'checkbox.th')])
+        wire:key="checkbox-all-{{ $tableName }}"
     >
-        <div class="{{ data_get($theme, 'divClass') }}">
-            <label class="{{ data_get($theme, 'labelClass') }}">
+        <div class="{{ theme_style($theme, 'checkbox.base') }}">
+            <label class="{{ theme_style($theme, 'checkbox.label') }}">
                 <input
-                    class="{{ data_get($theme, 'inputClass') }}"
+                    class="{{ theme_style($theme, 'checkbox.input') }}"
                     type="checkbox"
                     wire:click="selectCheckboxAll"
                     wire:model="checkboxAll"
